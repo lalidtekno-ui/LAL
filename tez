@@ -1,0 +1,2289 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phoenix Incubator - Responsive Fast Orbit</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+<style>
+@keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+    animation: spin-slow 8s linear infinite;
+}
+
+    #map { height: 380px; width: 100%; border-radius: 15px; }
+    /* Penyesuaian tema gelap untuk popup Leaflet */
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+        background: #1e293b !important; color: white !important;
+    }
+    .leaflet-control-geocoder { border-radius: 8px !important; border: none !important; box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important; }
+    .leaflet-control-geocoder-form input { border-radius: 5px; padding: 5px; }
+	/* Memaksa teks di kotak pencarian agar terlihat terang */
+.leaflet-control-geocoder-form input {
+    color: #1D1D1F !important; /* Warna teks putih */
+    background-color: #FFFFFF !important; /* Latar belakang biru gelap */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 8px 12px !important;
+    outline: none !important;
+}
+
+/* Memperbaiki warna teks hasil pencarian yang muncul di bawah kotak */
+.leaflet-control-geocoder-alternatives li {
+    background-color: #ffffff !important;
+    color: #cbd5e1 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.leaflet-control-geocoder-alternatives li:hover {
+    background-color: #0071E3 !important;
+    color: #ffffff !important;
+}
+
+/* Memperbaiki ikon kaca pembesar jika tertutup warna gelap */
+.leaflet-control-geocoder-icon {
+    filter: invert(1); /* Membalik warna ikon jadi putih jika aslinya hitam */
+}
+</style>
+
+    <style>
+/* font digital */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+.digital-font {
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 2px;
+}
+/* font digital */
+	 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;400;700&display=swap');
+        
+        .body-netspeed { 
+            background-color: #000; 
+            margin: 0; 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center; 
+            color: #fff;
+            padding: 2rem 0; 
+        }
+
+        .main-wrapper-netspeed {
+            width: 90%;
+            max-width: 1200px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .speed-value-netspeed {
+            font-size: clamp(1rem, 12vw, 1rem); 
+            font-weight: 200;
+            line-height: 1;
+            letter-spacing: -0.06em;
+        }
+
+        .chart-container-netspeed {
+            position: absolute;
+            bottom: -5px; 
+            left: -5%;
+            width: 110%;
+            height: clamp(30px, 20vh, 50px); 
+            z-index: -1;
+            pointer-events: none;
+            -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
+        }
+
+        .metric-label-netspeed {
+            font-size: clamp(0.5rem, 1.5vw, 0.65rem);
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        /* Mobile Adjustments */
+@media (max-width: 768px) {
+    .main-wrapper-netspeed {
+        width: 95% !important; /* Mengubah lebar dari 90% menjadi 95% di mobile */
+    }
+    
+    .grid-side-by-side-netspeed {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 1rem !important;
+    }
+            .unit-text-netspeed {
+                font-size: 0.6rem !important;
+            }
+            .border-mobile-divider-netspeed {
+                border-left: 1px solid rgba(255,255,255,0.1);
+                padding-left: 1rem;
+            }
+        }
+        body {
+            margin: 0;
+            background: #020617;
+            background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        /* --- PENYESUAIAN TINGGI 90% UNTUK DESKTOP & TABLET --- */
+        .main-wrapper {
+            position: relative;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            width: 95%; 
+            height: 90%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        /* --- CONTAINER UTAMA --- */
+        .egg-container {
+            position: relative;
+            width: 450px;
+            height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .phoenix-egg {
+            width: 160px;
+            height: 230px;
+            background: linear-gradient(135deg, #fde047 0%, #f97316 50%, #7c2d12 100%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            box-shadow: 0 0 50px rgba(253, 224, 71, 0.3), inset -20px -30px 50px rgba(0,0,0,0.5), inset 10px 10px 30px rgba(255,255,255,0.4);
+            position: relative;
+            z-index: 5;
+            animation: float 4s ease-in-out infinite, pulse 3s ease-in-out infinite;
+            transition: all 0.5s ease;
+        }
+
+        .egg-container:hover .phoenix-egg {
+            transform: scale(0.9);
+            filter: brightness(0.6) blur(1px);
+        }
+
+        /* --- SISTEM ORBIT --- */
+        .orbit-path {
+            position: absolute;
+            width: 320px; 
+            height: 320px;
+            border-radius: 50%;
+            animation: rotate-main 20s linear infinite; 
+            z-index: 20;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .egg-container:hover .orbit-path {
+            animation-play-state: paused;
+            transform: rotate(0deg) !important;
+            width: 380px; 
+            height: 380px;
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+
+        .energy-bead {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #38bdf8;
+            border-radius: 50%;
+            box-shadow: 0 0 15px #38bdf8, 0 0 30px #0ea5e9;
+            z-index: 35;
+            top: 50%;
+            left: 50%;
+            margin-top: -5px;
+            margin-left: -5px;
+            animation: orbit-run 25s linear infinite;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes orbit-run {
+            from { transform: rotate(0deg) translateX(160px) rotate(0deg); }
+            to { transform: rotate(360deg) translateX(160px) rotate(-360deg); }
+        }
+
+        .egg-container:hover .energy-bead {
+            animation: orbit-run-hover 2s linear infinite;
+        }
+
+        @keyframes orbit-run-hover {
+            from { transform: rotate(0deg) translateX(190px) rotate(0deg); }
+            to { transform: rotate(360deg) translateX(190px) rotate(-360deg); }
+        }
+
+        /* --- NAVIGASI MENU --- */
+        .nav-item {
+            position: absolute;
+            width: 130px;
+            pointer-events: auto;
+            transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .nav-content {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 10px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            animation: rotate-inverse 20s linear infinite;
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .egg-container:hover .nav-content {
+            animation-play-state: paused;
+            transform: rotate(0deg) !important;
+        }
+
+        .item-project { left: 0; top: 50%; transform: translate(-50%, -50%); }
+        .item-contact { right: 0; top: 50%; transform: translate(50%, -50%); }
+
+        .egg-container:hover .item-project { top: 25% !important; left: 50% !important; transform: translate(-50%, -50%) !important; }
+        .egg-container:hover .item-contact { top: 75% !important; left: 50% !important; transform: translate(-50%, -50%) !important; }
+
+        .nav-content:hover {
+            background: rgba(56, 189, 248, 0.9) !important;
+            border-color: white !important;
+            transform: scale(1.1);
+        }
+
+        .nav-content:hover i, .nav-content:hover p { color: #000 !important; }
+
+        /* --- MODAL & DETAIL PAGE --- */
+        .modal-overlay, .detail-page {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.9);
+            backdrop-filter: blur(15px);
+            display: none; 
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            transition: all 0.4s ease;
+        }
+
+        .active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: #0f172a;
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            border-radius: 24px;
+            padding: 30px;
+            width: 90%;
+            max-width: 550px;
+            transform: scale(0.8);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            box-shadow: 0 0 50px rgba(56, 189, 248, 0.1);
+        }
+
+        .detail-content {
+            width: 100%;
+            height: 100%;
+            background: #020617;
+            overflow-y: auto;
+            padding: 40px 20px;
+            transform: translateY(50px);
+            transition: all 0.5s ease;
+        }
+
+        .active .modal-content, .active .detail-content {
+            transform: scale(1) translateY(0);
+        }
+
+        /* --- DEKORASI --- */
+        .scanner-ring, .scanner-ring-delay {
+            position: absolute;
+            bottom: 60px;
+            width: 280px;
+            height: 60px;
+            border-radius: 50%;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .scanner-ring { border: 2px solid #38bdf8; animation: scan-pulse 2s ease-out infinite; }
+        .scanner-ring-delay { border: 1px solid #fde047; animation: scan-pulse 2s ease-out infinite 1s; }
+
+        .base-glow {
+            position: absolute;
+            bottom: 60px;
+            width: 260px;
+            height: 50px;
+            background: rgba(56, 189, 248, 0.15);
+            border: 2px solid rgba(56, 189, 248, 0.5);
+            border-radius: 50%;
+            box-shadow: 0 0 60px rgba(56, 189, 248, 0.4);
+            z-index: 1;
+        }
+
+        @keyframes rotate-main { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes rotate-inverse { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+        @keyframes scan-pulse { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        @keyframes pulse { 0%, 100% { scale: 1; } 50% { scale: 1.03; } }
+
+        .header-title { letter-spacing: 0.6em; font-size: 11px; font-weight: 800; opacity: 0.6; margin-bottom: 5px; text-transform: uppercase; }
+        .timer-text { font-size: 1.3rem; font-weight: 700; color: #fde047; margin-top: 5px; }
+        .timer-span { color: #38bdf8; font-family: monospace; border-bottom: 2px solid #38bdf8; padding: 0 5px; }
+        
+        /* --- BUTTONS & LOGIN CIRCLE --- */
+        .btn-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .btn { 
+            padding: 10px 24px; 
+            border-radius: 12px; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            border: 1px solid transparent; 
+            cursor: pointer; 
+            font-size: 11px; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 10px;
+            letter-spacing: 1px;
+        }
+
+        .btn-gold { background: rgba(253, 224, 71, 0.05); border-color: rgba(253, 224, 71, 0.3); color: #fde047; }
+        .btn-gold:hover { background: #fde047; color: #000; box-shadow: 0 0 25px rgba(253, 224, 71, 0.5); transform: translateY(-3px); }
+
+        .btn-blue { background: rgba(56, 189, 248, 0.05); border-color: rgba(56, 189, 248, 0.3); color: #38bdf8; }
+        .btn-blue:hover { background: #38bdf8; color: #000; box-shadow: 0 0 25px rgba(56, 189, 248, 0.5); transform: translateY(-3px); }
+
+        /* --- CIRCULAR LOGIN OPTIMIZED --- */
+        .login-circle {
+            width: 90px; height: 90px; background: #0f172a; border: 2px solid #38bdf8; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center; cursor: pointer; position: relative; transition: 0.4s;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+        }
+
+        .circular-text {
+            position: absolute;
+            width: 100%; 
+            height: 100%;
+            animation: rotate-main 25s linear infinite;
+        }
+
+        .circular-text text {
+            fill: #38bdf8;
+            font-size: 9px; /* Diperkecil sedikit lagi agar rapi */
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1.5px; /* Spasi antar huruf disesuaikan */
+        }
+
+        .login-circle i { font-size: 28px; color: #38bdf8; transition: 0.3s; z-index: 2; }
+        .login-circle:hover { background: #38bdf8; box-shadow: 0 0 35px #38bdf8; transform: scale(1.1); }
+        .login-circle:hover i { color: #0f172a; }
+        .login-circle:hover .circular-text text { fill: #0f172a; }
+
+        .finger-pulse {
+            position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #38bdf8;
+            opacity: 0; animation: ping-custom 2s ease-in-out infinite;
+        }
+
+        @keyframes ping-custom {
+            0% { transform: scale(1); opacity: 0.4; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+
+        /* CONTACT MODAL REINVENTED */
+        #modal-contact .modal-content {
+            max-width: 480px;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+        }
+
+        .contact-grid {
+            display: grid;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .contact-card-premium {
+            position: relative;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(56, 189, 248, 0.1);
+            padding: 20px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            text-decoration: none;
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            overflow: hidden;
+        }
+
+        .contact-card-premium::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.1), transparent);
+            transition: 0.5s;
+        }
+
+        .contact-card-premium:hover::before {
+            left: 100%;
+        }
+
+        .contact-card-premium:hover {
+            background: rgba(56, 189, 248, 0.08);
+            border-color: rgba(56, 189, 248, 0.5);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .icon-box-premium {
+            width: 54px;
+            height: 54px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(15, 23, 42, 0.5));
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.4rem;
+            color: #38bdf8;
+            transition: 0.3s;
+        }
+
+        .contact-card-premium:hover .icon-box-premium {
+            background: #38bdf8;
+            color: #0f172a;
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        .contact-info-text h4 {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: #38bdf8;
+            font-weight: 800;
+            margin-bottom: 2px;
+        }
+
+        .contact-info-text p {
+            font-size: 14px;
+            color: white;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 9px;
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        /* --- AI TECH MODAL STYLING --- */
+        .ai-glow-card {
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .ai-glow-card::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* --- RESPONSIVE MOBILE --- */
+@media (max-width: 640px) {
+    /* 1. Paksa wrapper utama untuk mengizinkan konten lebih lebar */
+    .main-wrapper { 
+        width: 100% !important; 
+        padding: 5px !important; /* Perkecil padding agar konten bisa melebar */
+        height: 95%; 
+    }
+
+    /* 2. Ubah lebar timer-text (netspeed) menjadi 98% */
+    .main-wrapper-netspeed { 
+        width: 90% !important; 
+        display: block !important; /* Memastikan muncul di mobile */
+        margin: 0 auto;
+    }
+
+    /* 3. Menyesuaikan posisi chart agar tidak terpotong saat melebar */
+    .chart-container-netspeed {
+        left: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Elemen lainnya tetap */
+    .egg-container { transform: scale(0.6); margin-bottom: -30px; margin-top: -30px; }
+    .timer-text { font-size: 1.1rem; width: 100%; }
+    .btn-container { gap: 8px; margin-top: 15px; }
+    .btn { padding: 8px 14px; font-size: 9px; }
+    .login-circle { width: 75px; height: 75px; }
+    .login-circle i { font-size: 22px; }
+    .header-title { font-size: 9px; letter-spacing: 0.3em; }
+}
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 10px; }
+    
+	
+	
+	/* Container Telur */
+.egg-wrapper {
+    width: 160px;
+    height: 230px;
+    position: relative;
+    z-index: 10;
+    animation: float 4s ease-in-out infinite;
+    transition: all 0.5s ease;
+}
+
+/* Telur Utuh Mulus */
+.egg-solid {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #fde047 0%, #f97316 50%, #7c2d12 100%);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    box-shadow: inset -20px -30px 50px rgba(0,0,0,0.5), inset 10px 10px 30px rgba(255,255,255,0.4);
+    z-index: 15;
+    transition: opacity 0.3s ease;
+}
+
+/* Bagian Pecahan */
+.egg-part {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #fde047 0%, #f97316 50%, #7c2d12 100%);
+    box-shadow: inset -20px -30px 50px rgba(0,0,0,0.5), inset 10px 10px 30px rgba(255,255,255,0.4);
+    opacity: 0;
+    transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.top-half {
+    clip-path: polygon(0% 50%, 20% 42%, 45% 52%, 55% 38%, 80% 48%, 100% 35%, 100% 0%, 0% 0%);
+    transform-origin: top center;
+    z-index: 12;
+}
+
+.bottom-half {
+    clip-path: polygon(0% 50%, 20% 42%, 45% 52%, 55% 38%, 80% 48%, 100% 35%, 100% 100%, 0% 100%);
+    transform-origin: bottom center;
+    z-index: 11;
+}
+
+/* Konten AI di dalam telur */
+.ai-hatch-content {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 60px; height: 60px;
+    background: #38bdf8;
+    border-radius: 50%;
+    display: flex; justify-content: center; align-items: center;
+    color: #0f172a; font-size: 24px;
+    box-shadow: 0 0 30px #38bdf8;
+    opacity: 0;
+    z-index: 13;
+    transition: all 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* State Menetas */
+.is-shaking { animation: shake 0.4s double-infinite; }
+
+.is-hatched .egg-solid { opacity: 0; }
+.is-hatched .egg-part { opacity: 1; }
+
+.is-hatched .top-half {
+    transform: translateY(-130px) rotate(-25deg);
+    opacity: 0;
+}
+
+.is-hatched .bottom-half {
+    transform: translateY(70px) rotate(15deg);
+    opacity: 0.4;
+}
+
+.is-hatched .ai-hatch-content {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(2);
+    box-shadow: 0 0 60px #38bdf8, 0 0 100px rgba(56, 189, 248, 0.5);
+}
+
+/* Keyframes Getaran Organik */
+@keyframes shake-organic {
+    0% { transform: rotate(0deg) scale(1); }
+    10% { transform: rotate(2deg) translateX(1px); }
+    20% { transform: rotate(-2deg) translateX(-1px); }
+    30% { transform: rotate(3deg) scale(1.02); }
+    40% { transform: rotate(-3deg); }
+    50% { transform: rotate(1deg) scale(1.05); }
+    100% { transform: rotate(0deg) scale(1); }
+}
+
+/* Update Animasi Shake */
+.is-shaking { 
+    animation: shake-organic 0.5s cubic-bezier(.36,.07,.19,.97) infinite; 
+}
+
+/* Efek Pecahan yang Lebih Dramatis */
+.is-hatched .top-half {
+    transform: translateY(-150px) translateX(-20px) rotate(-35deg) !important;
+    opacity: 0 !important;
+    filter: blur(2px);
+}
+
+.is-hatched .bottom-half {
+    transform: translateY(100px) translateX(10px) rotate(20deg) !important;
+    opacity: 0 !important;
+    filter: blur(2px);
+}
+	
+	/* Animasi munculnya retakan secara tiba-tiba */
+.is-cracking .egg-cracks {
+    opacity: 1 !important;
+    animation: crack-shake 0.3s infinite;
+}
+
+@keyframes crack-shake {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); stroke: #7c2d12; }
+    100% { transform: scale(1); }
+}
+
+/* Pastikan saat menetas, retakan ikut hilang bersama cangkang */
+.is-hatched .egg-cracks {
+    display: none;
+}
+
+/* Sempurnakan animasi pecahan agar terlempar ke arah berlawanan */
+.is-hatched .top-half {
+    transform: translateY(-180px) translateX(-40px) rotate(-45deg) !important;
+    opacity: 0 !important;
+    transition: all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.is-hatched .bottom-half {
+    transform: translateY(120px) translateX(30px) rotate(30deg) !important;
+    opacity: 0 !important;
+    transition: all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+	
+	/* Efek Retakan Menjalar */
+.crack-line {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke-dashoffset 0.6s ease-in-out;
+}
+
+.is-cracking .egg-cracks {
+    opacity: 1 !important;
+}
+
+.is-cracking .crack-line {
+    stroke-dashoffset: 0; /* Garis akan terlihat seperti menjalar */
+}
+
+/* Animasi getaran saat retak (lebih intens) */
+.is-cracking {
+    animation: shake-intense 0.2s infinite;
+}
+
+@keyframes shake-intense {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(2px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    75% { transform: translate(1px, 1px) rotate(0.5deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+/* Pecahan kulit telur yang lebih tajam (Clip Path Zigzag) */
+.top-half {
+    clip-path: polygon(0% 50%, 20% 45%, 35% 52%, 50% 42%, 65% 53%, 85% 44%, 100% 50%, 100% 0%, 0% 0%);
+}
+
+.bottom-half {
+    clip-path: polygon(0% 50%, 20% 45%, 35% 52%, 50% 42%, 65% 53%, 85% 44%, 100% 50%, 100% 100%, 0% 100%);
+}
+	/* --- SIDE METRICS STYLE --- */
+.side-metric {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 30;
+    pointer-events: none;
+}
+
+.left-metric { left: -225px; }  /* Geser lebih ke kiri (sebelumnya -225px) */
+.right-metric { right: -225px; } /* Geser lebih ke kanan (sebelumnya -225px) */
+
+.metric-glass {
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 30px;    /* Tambah tinggi ke atas */
+    padding-bottom: 30px; /* Tambah tinggi ke bawah */
+	height: 200px;
+    border-radius: 15px;
+    display: flex;
+	justify-content: center;
+	justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    min-width: 200px;
+	min-high: 200px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.vertical-bar-bg {
+    width: 4px;
+    height: 85px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.vertical-bar-fill {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 50%; /* Akan diupdate via JS */
+    transition: height 0.5s ease;
+    box-shadow: 0 0 15px currentColor;
+}
+
+/* Sembunyikan di Mobile agar tidak berantakan */
+@media (max-width: 768px) {
+    .side-metric { display: none; }
+}
+/* Animasi Loading Chat - Terisolasi */
+.chat-system-aielmo .typing-dot-aielmo {
+    width: 6px;
+    height: 6px;
+    background: #60a5fa;
+    border-radius: 50%;
+    display: inline-block;
+    margin: 0 1px;
+    animation: typing-bounce-aielmo 1.4s infinite ease-in-out both;
+}
+
+.chat-system-aielmo .typing-dot-aielmo:nth-child(1) { animation-delay: -0.32s; }
+.chat-system-aielmo .typing-dot-aielmo:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing-bounce-aielmo {
+    0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+/* Mengunci font chat agar tidak terpengaruh font digital dashboard */
+.chat-system-aielmo {
+    font-family: sans-serif !important;
+}	
+/* Animasi Loading Chat - Meniru Gaya ChatGPT */
+.typing-dots {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 0;
+}
+
+.typing-dots span {
+    width: 6px;
+    height: 6px;
+    background: #60a5fa; /* Warna biru sky */
+    border-radius: 50%;
+    display: inline-block;
+    animation: typing-bounce 1.4s infinite ease-in-out both;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing-bounce {
+    0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+    40% { transform: scale(1); opacity: 1; }
+}
+/* Merapikan format teks di dalam gelembung AI */
+.prose-custom h3 {
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin-top: 8px;
+    margin-bottom: 4px;
+    color: #f8fafc;
+}
+
+.prose-custom ul, .prose-custom ol {
+    margin-left: 1.25rem;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    list-style-type: disc;
+}
+
+.prose-custom ol {
+    list-style-type: decimal;
+}
+
+.prose-custom li {
+    margin-bottom: 2px;
+}
+
+.prose-custom code {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: monospace;
+    color: #60a5fa;
+}
+
+.prose-custom strong {
+    color: #fff;
+    font-weight: 600;
+}
+.suggestion-btn-aielmo {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1; /* slate-300 */
+    padding: 8px 12px;
+    margin-bottom: 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 11px;
+}
+
+.suggestion-btn-aielmo:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #00f2fe; /* Warna neon sesuai tema Anda */
+    color: #fff;
+}
+/* Container Notifikasi */
+#toast-container-aielmo {
+    position: fixed;
+    top: 25px;
+    right: 25px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Style Toast Modern */
+.toast-modern-aielmo {
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-left: 4px solid #00f2fe;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f8fafc;
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    min-width: 280px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    animation: slideInToast 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideInToast {
+    from { transform: translateX(100%) scale(0.9); opacity: 0; }
+    to { transform: translateX(0) scale(1); opacity: 1; }
+}
+
+.toast-icon-aielmo {
+    background: rgba(0, 242, 254, 0.1);
+    color: #00f2fe;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.toast-content-aielmo b {
+    display: block;
+    font-size: 0.85rem;
+    color: #fff;
+    margin-bottom: 2px;
+}
+
+.toast-content-aielmo p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+</style>
+</head>
+<body>
+
+    <div class="main-wrapper">
+        <div class="flex flex-col items-center mb-6">
+    <div class="flex items-center justify-between w-full w-auto px-4 gap-4">
+        
+        <div class="flex flex-col items-center min-w-[70px]">
+            <div id="temp-display" class="text-[15px] font-black digital-font text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.4)]">--°C</div>
+            <span class="text-[10px] uppercase tracking-tighter text-slate-500 font-bold">Temperature</span>
+        </div>
+
+        <div class="text-center">
+    <h2 id="changing-text" class="text-[11px] font-bold text-white tracking-widest uppercase leading-tight transition-opacity duration-500">
+        Smart Control System <span class="text-sky-400">LAL IDtekno</span>
+    </h2>
+    <div class="mt-3 flex items-center justify-center gap-2 bg-white/5 px-3 py-1 rounded-full border border-white/10 cursor-pointer hover:bg-sky-500/20 transition-all active:scale-95" 
+     onclick="openMapModal()">
+    <i class="fa-solid fa-location-dot text-[8px] text-red-500 animate-pulse"></i>
+    <span id="loc-city" class="text-[8px] text-slate-300 uppercase font-bold tracking-widest">DETEKSI LOKASI...</span>
+    <span class="text-slate-600 text-[8px]">|</span>
+    <span id="loc-coords" class="text-[10px] text-slate-500 font-mono italic">0.000, 0.000</span>
+</div>
+</div>
+
+        <div class="flex flex-col items-center min-w-[70px]">
+            <div id="humi-display" class="text-[15px] font-black digital-font text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]">--%</div>
+            <span class="text-[10px] uppercase tracking-tighter text-slate-500 font-bold">Humidity</span>
+        </div>
+    </div>
+</div>
+
+        <div class="egg-container" id="egg-trigger">
+    <div class="side-metric left-metric">
+        <div class="metric-glass">
+            <div class="flex items-center justify-center">
+    <i class="fas fa-download text-[#36B6EF] text-[10px] mr-2"></i>
+    
+    <span class="text-[#36B6EF] text-[12px] uppercase font-bold tracking-[0.2em] digital-font">
+        Download
+    </span>
+</div>
+            <span id="side-dl" class="text-[#36B6EF] text-7xl font-light tracking-tighter digital-font">--</span>
+            <span class="text-[14px] opacity-50 uppercase font-bold digital-font">DL Mbps</span>
+			<span class="text-[10px] opacity-50 font-bold">Speed Connection Now</span>
+        </div>
+        <div class="vertical-bar-bg"><div id="bar-dl" class="vertical-bar-fill bg-sky-400"></div></div>
+    </div>
+
+    <div class="side-metric right-metric">
+        <div class="vertical-bar-bg"><div id="bar-ul" class="vertical-bar-fill bg-yellow-400"></div></div>
+        <div class="metric-glass">
+            <div class="flex items-center justify-center">
+    <i class="fas fa-upload text-yellow-400 text-[10px] mr-2"></i>
+    
+    <span class="text-[#FDE047] text-[12px] uppercase font-bold tracking-[0.2em] digital-font">
+        Upload
+    </span>
+</div>
+            <span id="side-ul" class="text-[#FDE047] text-7xl font-light tracking-tighter digital-font">--</span>
+            <span class="text-[14px] opacity-50 uppercase font-bold digital-font">UL Mbps</span>
+			<span class="text-[10px] opacity-50 font-bold">Speed Connection Now</span>
+        </div>
+    </div>
+    <div class="scanner-ring"></div>
+    <div class="scanner-ring-delay"></div>
+    <div class="base-glow"></div>
+
+    <div class="orbit-path">
+        <div class="energy-bead"></div>
+        <div class="nav-item item-project" onclick="openModal('modal-projects')">
+            <div class="nav-content">
+                <i class="fas fa-layer-group"></i>
+                <p class="text-[11px] font-black text-sky-400 tracking-wider uppercase">Projects</p>
+                <p class="text-[9px] opacity-60">View Work</p>
+            </div>
+        </div>
+        <div class="nav-item item-contact" onclick="openModal('modal-contact')">
+            <div class="nav-content">
+                <i class="fas fa-paper-plane"></i>
+                <p class="text-[11px] font-black text-sky-400 tracking-wider uppercase">Contact</p>
+                <p class="text-[9px] opacity-60">Hire Me</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="egg-wrapper" id="main-egg">
+        <div class="egg-solid"></div>
+        <svg class="egg-cracks" viewBox="0 0 160 230" style="position:absolute; inset:0; z-index:16; opacity:0; pointer-events:none;">
+    <path class="crack-line" d="M30 110 L50 100 L70 115 L90 105 L110 120 L135 110" fill="none" stroke="#451a03" stroke-width="2.5" stroke-dasharray="100" stroke-dashoffset="100"/>
+    <path class="crack-line" d="M70 115 L65 80 L85 60" fill="none" stroke="#451a03" stroke-width="1.5" stroke-dasharray="50" stroke-dashoffset="50"/>
+    <path class="crack-line" d="M110 120 L115 150 L100 170" fill="none" stroke="#451a03" stroke-width="1.5" stroke-dasharray="50" stroke-dashoffset="50"/>
+</svg>
+        
+        <div class="egg-part top-half"></div>
+        <div class="egg-part bottom-half"></div>
+        
+        <div id="ai-seed" class="ai-hatch-content">
+            <div class="inner-glow"></div>
+            <i class="fas fa-microchip"></i>
+        </div>
+    </div>
+</div>
+
+        <div class="timer-text">
+            <div class="main-wrapper-netspeed max-sm:block">
+        <div class="flex items-center gap-3 mb-1 md:mb-0">
+            <div id="status-dot-netspeed" class="w-2 h-2 rounded-full bg-[#36B6EF] shadow-[0_0_15px_#36B6EF] animate-pulse block"></div>
+            <span class="metric-label-netspeed text-white/30 ">speed your conection</span>
+        </div>
+
+        <div class="flex flex-row justify-between md:grid md:grid-cols-2 gap-4 md:gap-32 grid-side-by-side-netspeed">
+    <div class="flex-1">
+        <div class="flex items-center gap-2 mb-1">
+            <i class="block sm:hidden fa-solid fa-download text-[10px]" style="color: #36B6EF;"></i>
+            <span class="block sm:hidden metric-label-netspeed" style="color: #36B6EF;">Download</span>
+        </div>
+        <div class="flex items-baseline mt-2">
+            <span id="dl-val-netspeed" class="speed-value-netspeed block sm:hidden">--</span>
+            <span class="text-white opacity-90 ml-2 unit-text-netspeed font-light text-xs md:text-base block sm:hidden">mbps</span>
+        </div>
+    </div>
+
+    <div class="flex-1 border-mobile-divider-netspeed md:border-l md:border-white/5 md:pl-20">
+        <div class="flex items-center gap-2 mb-1">
+            <i class="block sm:hidden fa-solid fa-upload text-[10px]" style="color: #F1D646;"></i>
+            <span class="block sm:hidden metric-label-netspeed" style="color: #F1D646;">Upload</span>
+        </div>
+        <div class="flex items-baseline mt-2">
+            <span id="ul-val-netspeed" class="speed-value-netspeed block sm:hidden">--</span>
+            <span class="block sm:hidden text-white opacity-90 ml-2 unit-text-netspeed font-light text-xs md:text-base">mbps</span>
+        </div>
+    </div>
+</div>
+
+        <div class="chart-container-netspeed">
+            <canvas id="realtimeChart-netspeed"></canvas>
+        </div>
+    </div>
+        </div>
+
+        <div class="btn-container">
+            <button class="btn btn-gold" onclick="alert('Membuka Katalog Produk LAL IDtekno...')">
+                <i class="fas fa-bag-shopping"></i> Produk
+            </button>
+            
+            <div class="login-circle" onclick="openModal('modal-auth')">
+                <div class="finger-pulse"></div>
+                <svg class="circular-text" viewBox="0 0 100 100">
+                    <defs>
+                        <path id="circlePath" d="M 50, 50 m -38, 0 a 38,38 0 1,1 76,0 a 38,38 0 1,1 -76,0" />
+                    </defs>
+                    <text>
+                        <textPath xlink:href="#circlePath" startOffset="0%">
+                           • LOGIN • REGISTER • LOGIN • REGISTER
+                        </textPath>
+                    </text>
+                </svg>
+                <i class="fas fa-fingerprint"></i>
+            </div>
+
+            <button class="btn btn-blue" onclick="openModal('modal-ai')">
+                <i class="fas fa-microchip"></i> AI Tech
+            </button>
+        </div>
+    </div>
+
+    <div id="modal-ai" class="modal-overlay" onclick="closeModal(event, 'modal-ai')">
+    <div class="modal-content ai-glow-card flex flex-col h-[95vh] max-w-lg" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between mb-4 border-b border-sky-500/30 pb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-sky-500/20 rounded-xl flex justify-center items-center border border-sky-400/30">
+    <i id="status-icon" class="fas fa-microchip text-sky-400 transition-colors duration-300"></i>
+</div>
+<div>
+    <h3 class="text-lg font-black text-white uppercase tracking-tight">ELAL <span class="text-sky-400">Chat</span></h3>
+    <div id="connection-status" class="text-green-500 text-[10px] transition-all duration-300 flex items-center">
+    System Online
+</div>
+</div>
+            </div>
+            <button class="text-gray-500 hover:text-white" onclick="closeModal(null, 'modal-ai')">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+<h3 class="text-[20px] font-black text-white tracking-tighter leading-none mb-2">
+    Halo, <span id="greeting-text" class="text-sky-400">CONNECT.</span>
+</h3>
+	<span class="text-[#FFFFFF] text-[10px]">
+        Saya adalah sebuah sistem yang dibuat untuk percakapan satu topik pembahasan, <br>jika ada ada topik lain yang mau ditanyakan silahkan tutup chat dan buka kembali, <br> sekarang apa yang bisa saya bantu?.
+    </span>
+	<br>
+        <div id="chat-container-aielmo" class="flex-1 overflow-y-auto space-y-4 pr-2 mb-4 scrollbar-thin">
+            
+        </div>
+
+       <div id="history-buffer-aielmo" class="hidden text-[9px] text-sky-400/40 italic mb-2 truncate px-2">
+    History: -
+</div>
+
+        <div class="relative">
+            <input type="text" id="chat-input-aielmo" 
+    class="w-full bg-slate-900 border border-sky-500/30 rounded-xl py-3 px-4 text-[11px] text-white focus:outline-none focus:border-sky-400 transition-all pr-12"
+    placeholder="Apa pertanyaanmu...">
+            <button id="send-btn-aielmo" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-sky-500 rounded-lg text-slate-900 text-xs hover:bg-sky-400 transition-all">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+				<div class="w-full flex flex-col items-center gap-1 mt-2">
+    <span class="text-[9px] text-slate-500/60 font-light tracking-widest">
+        &copy; 2026 LAL IDTEKNO — sebuah sistem yang dapat melakukan kesalahan.
+    </span>
+</div>
+    </div>
+</div>
+
+    <div id="modal-projects" class="modal-overlay" onclick="closeModal(event, 'modal-projects')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="absolute top-4 right-4 text-gray-400 hover:text-white" onclick="closeModal(null, 'modal-projects')">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <h3 class="text-2xl font-bold text-sky-400 mb-4 uppercase tracking-widest border-b border-sky-900 pb-2">My Projects</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left mt-4 max-h-[60vh] overflow-y-auto pr-2">
+                <div onclick="openProject('smart-incubator')" class="p-4 bg-slate-800/50 rounded-xl border border-slate-700 hover:border-sky-500 hover:bg-slate-800 transition-all cursor-pointer group">
+                    <div class="flex justify-between items-start">
+                        <h4 class="font-bold text-yellow-400 group-hover:text-sky-400">Smart Incubator</h4>
+                        <i class="fas fa-external-link-alt text-[10px] opacity-50"></i>
+                    </div>
+                    <p class="text-[12px] opacity-70">Sistem otomatisasi suhu dan kelembapan berbasis IoT.</p>
+                </div>
+                
+                <div onclick="openProject('database')" class="p-4 bg-slate-800/50 rounded-xl border border-slate-700 hover:border-sky-500 hover:bg-slate-800 transition-all cursor-pointer group">
+                    <div class="flex justify-between items-start">
+                        <h4 class="font-bold text-yellow-400 group-hover:text-sky-400">Suara Masteran</h4>
+                        <i class="fas fa-external-link-alt text-[10px] opacity-50"></i>
+                    </div>
+                    <p class="text-[12px] opacity-70">Kumpulan suara masteran burung pilihan terbaik.</p>
+                </div>
+				<div onclick="openProject('bird-care')" class="p-4 bg-slate-800/50 rounded-xl border border-slate-700 hover:border-sky-500 hover:bg-slate-800 transition-all cursor-pointer group">
+                    <div class="flex justify-between items-start">
+                        <h4 class="font-bold text-yellow-400 group-hover:text-sky-400">Asuh Burung</h4>
+                        <i class="fas fa-external-link-alt text-[10px] opacity-50"></i>
+                    </div>
+                    <p class="text-[12px] opacity-70">Sistem profesioanal penitipan burung, lolohan dan rawatan harian.</p>
+                </div>
+				<div onclick="openProject('manual-hatch')" class="p-4 bg-slate-800/50 rounded-xl border border-slate-700 hover:border-sky-500 hover:bg-slate-800 transition-all cursor-pointer group">
+                    <div class="flex justify-between items-start">
+                        <h4 class="font-bold text-yellow-400 group-hover:text-sky-400">Tetaskan Telur</h4>
+                        <i class="fas fa-external-link-alt text-[10px] opacity-50"></i>
+                    </div>
+                    <p class="text-[12px] opacity-70">Penitipan penetasan telur burung dengan cara terbaik.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-contact" class="modal-overlay" onclick="closeModal(event, 'modal-contact')">
+        <div class="modal-content text-left" onclick="event.stopPropagation()">
+            <button class="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors" onclick="closeModal(null, 'modal-contact')">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            
+            <div class="status-indicator">
+                <div class="status-dot"></div> Available for Projects
+            </div>
+            
+            <h3 class="text-4xl font-black text-white tracking-tighter leading-none mb-2">
+                LET'S <span class="text-sky-400">CONNECT.</span>
+            </h3>
+            <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                Silakan hubungi tim profesional **LAL IDtekno** untuk konsultasi sistem kontrol cerdas Anda.
+            </p>
+
+            <div class="contact-grid">
+                <a href="https://wa.me/nomor-anda" class="contact-card-premium">
+                    <div class="icon-box-premium">
+                        <i class="fab fa-whatsapp"></i>
+                    </div>
+                    <div class="contact-info-text">
+                        <h4>DIRECT CHAT</h4>
+                        <p>WhatsApp Business</p>
+                    </div>
+                    <i class="fas fa-arrow-right ml-auto text-slate-700"></i>
+                </a>
+
+                <a href="mailto:admin@lalidtekno.com" class="contact-card-premium">
+                    <div class="icon-box-premium">
+                        <i class="far fa-envelope"></i>
+                    </div>
+                    <div class="contact-info-text">
+                        <h4>SEND INQUIRY</h4>
+                        <p>admin@lalidtekno.com</p>
+                    </div>
+                    <i class="fas fa-arrow-right ml-auto text-slate-700"></i>
+                </a>
+
+                <div class="mt-4 pt-6 border-t border-white/5 flex justify-between items-center">
+                    <span class="text-[10px] text-slate-500 font-bold tracking-widest uppercase">Social Presence</span>
+                    <div class="flex gap-4">
+                        <a href="#" class="text-slate-400 hover:text-sky-400 transition-colors"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-slate-400 hover:text-sky-400 transition-colors"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" class="text-slate-400 hover:text-sky-400 transition-colors"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-auth" class="modal-overlay" onclick="closeModal(event, 'modal-auth')">
+        <div class="modal-content text-center" onclick="event.stopPropagation()">
+            <button class="absolute top-4 right-4 text-gray-400 hover:text-white" onclick="closeModal(null, 'modal-auth')">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <i class="fas fa-fingerprint text-5xl text-sky-400 mb-4"></i>
+            <h3 class="text-2xl font-bold text-sky-400 mb-2 uppercase tracking-widest">Login Security</h3>
+            <p class="text-sm opacity-70 mb-6">Akses kontrol sistem LAL IDtekno membutuhkan otentikasi.</p>
+            <div class="space-y-3">
+                <a href="#" class="flex items-center justify-center gap-3 p-3 bg-sky-500/10 border border-sky-500/30 rounded-lg hover:bg-sky-500/20 transition-all">
+                    <i class="fas fa-user-shield text-sky-400"></i>
+                    <span>Masuk sebagai Admin</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="project-detail" class="detail-page">
+        <div class="detail-content">
+            <div class="max-w-4xl mx-auto">
+                <button class="mb-8 flex items-center gap-2 text-sky-400 hover:text-white transition-all uppercase tracking-widest font-bold" onclick="closeProject()">
+                    <i class="fas fa-arrow-left"></i> Back to Fleet
+                </button>
+                <div id="project-content-target"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const projectsData = {
+            'smart-incubator': {
+                title: 'Smart Egg Incubator IoT',
+                tag: 'IOT & AUTOMATION',
+                desc: 'Solusi penetasan modern dengan kendali jarak jauh. Menggunakan ESP32 untuk monitoring real-time suhu, kelembapan, dan pembalikan telur otomatis.',
+                features: ['Real-time Cloud Sync', 'Mobile App Dashboard', 'Precision Temperature Sensor (SHT31)', 'AI Hatching Prediction'],
+                color: 'sky'
+            },
+            'manual-hatch': {
+                title: 'Manual Hatching System',
+                tag: 'MANAGEMENT SYSTEM',
+                desc: 'Digitalisasi proses penetasan manual. Membantu peternak mengelola jadwal pengeraman dengan notifikasi otomatis via WhatsApp dan Telegram.',
+                features: ['Incubation Calendar', 'WhatsApp Reminders', 'Hatch Rate Analytics', 'Multi-species Presets'],
+                color: 'yellow'
+            },
+            'bird-care': {
+                title: 'Bird Care Analysis',
+                tag: 'HEALTH MONITORING',
+                desc: 'Aplikasi analisis kesehatan anakan burung (lolohan). Menggunakan parameter berat badan dan konsumsi pakan untuk memastikan pertumbuhan optimal.',
+                features: ['Growth Chart Tracker', 'Nutrition Calculator', 'Illness Early Detection', 'Expert Consultation Bridge'],
+                color: 'green'
+            },
+            'database': {
+    title: 'Masteran Audio Player',
+    tag: 'SUARA MASTERAN',
+    desc: `
+        <div class="music-player-ui bg-slate-900/50 p-6 rounded-2xl border border-sky-500/30 mt-4">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-16 h-16 bg-sky-500/20 rounded-full flex items-center justify-center animate-spin-slow">
+                    <i class="fas fa-compact-disc text-3xl text-sky-400"></i>
+                </div>
+                <div class="player-card">
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <h2 class="digital-font text-[10px] tracking-[0.4em] text-sky-400 uppercase font-bold">LAL IDtekno Audio System</h2>
+            <h1 class="text-2xl font-black text-white mt-1">SUARA MASTERAN</h1>
+        </div>
+
+        <!-- Visualizer/Vinyl -->
+        <div class="vinyl-container">
+            <div id="vinyl" class="vinyl-disk">
+                <div class="glow-dot"></div>
+            </div>
+            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-sky-500/20 px-3 py-1 rounded-full border border-sky-500/30">
+                <span id="status-text" class="text-[10px] font-bold text-sky-400 uppercase tracking-widest">Ready</span>
+            </div>
+        </div>
+
+        <!-- Player Info -->
+        <div class="text-center mb-8">
+            <h3 id="current-title" class="text-lg font-bold text-white truncate">Pilih Masteran</h3>
+            <p id="current-tag" class="text-xs text-slate-500 uppercase tracking-widest mt-1">Smart Training Playlist</p>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex flex-col gap-6">
+            <!-- Progress Bar -->
+            <div class="w-full">
+                <input type="range" id="progress" value="0" class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-400">
+                <div class="flex justify-between mt-2 text-[10px] font-mono text-slate-500">
+                    <span id="time-current">0:00</span>
+                    <span id="time-total">0:00</span>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex justify-center items-center gap-8">
+                <button onclick="prevTrack()" class="text-slate-400 hover:text-white transition"><i class="fas fa-backward-step text-xl"></i></button>
+                <button id="play-btn" onclick="togglePlay()" class="w-16 h-16 bg-sky-500 text-slate-900 rounded-full flex justify-center items-center text-2xl shadow-[0_0_20px_rgba(56,189,248,0.4)] hover:scale-105 active:scale-95 transition">
+                    <i id="play-icon" class="fas fa-play"></i>
+                </button>
+                <button onclick="nextTrack()" class="text-slate-400 hover:text-white transition"><i class="fas fa-forward-step text-xl"></i></button>
+            </div>
+        </div>
+
+        <!-- Playlist Section -->
+        <div class="mt-10">
+            <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4 border-b border-white/5 pb-2">Core Features & Library</h4>
+            <div class="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scroll" id="playlist-container">
+                <!-- Items will be injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <audio id="audio-engine"></audio>iv>
+        </div>
+    `,
+    features: [
+        'Koleksi Suara Murai Batu (Medan, Borneo, Nias)', 
+        'Koleksi Suara Kacer & Cucak Ijo Gacor', 
+        'Terapi Alam & Gemericik Air High-Fidelity', 
+        'Playlist Pelatihan (Smart Competition Training)'
+    ],
+    color: 'purple'
+}
+        };
+
+        let count = 0;
+        const timerEl = document.getElementById('timer');
+        setInterval(() => {
+            count++;
+            let minutes = Math.floor(count / 60);
+            let seconds = count % 60;
+            timerEl.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}s`;
+        }, 1000);
+
+        function openModal(id) {
+    const egg = document.getElementById('main-egg');
+    const modal = document.getElementById(id);
+
+    if (id === 'modal-ai') {
+        // 1. Tahap GETAR (Mulai proses)
+        egg.classList.add('is-shaking');
+        
+        // 2. Tahap RETAK (Muncul garis retak setelah 600ms getar)
+        setTimeout(() => {
+            egg.classList.add('is-cracking');
+        }, 600);
+        
+        // 3. Tahap MENETAS (Pecah setelah 1.2 detik total)
+        setTimeout(() => {
+            egg.classList.remove('is-shaking', 'is-cracking');
+            egg.classList.add('is-hatched');
+            
+            // 4. Tahap POP-UP (Modal muncul saat chip AI membesar)
+            setTimeout(() => {
+                const modalBody = modal.querySelector('.modal-content');
+                modalBody.style.opacity = "0";
+                modalBody.style.transform = "scale(0.8) translateY(30px)";
+                modal.style.display = 'flex';
+                
+                setTimeout(() => {
+                    modal.classList.add('active');
+                    modalBody.style.opacity = "1";
+                    modalBody.style.transform = "scale(1) translateY(0)";
+                }, 100);
+            }, 700); // Jeda singkat agar user bisa melihat chip AI keluar
+        }, 1200); 
+
+    } else {
+        // Navigasi normal untuk tombol lain
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+    }
+}
+
+function closeModal(event, id) {
+    if (event && event.target.id !== id && !event.target.closest('.fa-times')) return;
+    
+    const modal = document.getElementById(id);
+    const modalBody = modal.querySelector('.modal-content');
+    
+    if (id === 'modal-ai') {
+        modalBody.style.transform = "scale(0) translateY(100px)";
+    }
+    
+    modal.classList.remove('active');
+    
+    setTimeout(() => {
+        modal.style.display = 'none';
+        
+        if (id === 'modal-ai') {
+            const egg = document.getElementById('main-egg');
+            if (egg) egg.classList.remove('is-hatched');
+
+            // --- PROSES PEMBERSIHAN TOTAL (HARD RESET) ---
+            
+            // 1. Bersihkan tampilan chat di layar
+            const chatContainer = document.getElementById('chat-content') || 
+                                  document.getElementById('chat-container-aielmo');
+            if (chatContainer) chatContainer.innerHTML = ''; 
+
+            // 2. Reset Teks Visual History Buffer
+            const historyBuffer = document.getElementById('history-buffer-aielmo');
+            if (historyBuffer) {
+                historyBuffer.innerText = "History: -";
+            }
+            
+ // 3. Reset Array/Variabel agar tidak menyimpan chat lama di memori
+            if (typeof chatHistoryArrayAielmo !== 'undefined') {
+                chatHistoryArrayAielmo = []; 
+            }
+            
+            // 4. Hapus sisa di LocalStorage agar saat refresh tidak muncul lagi
+            localStorage.removeItem('chatHistory');
+            
+            // 5. Kosongkan input field
+            const inputField = document.getElementById('chat-input-aielmo');
+            if (inputField) inputField.value = '';
+        }
+    }, 400);
+}
+
+        function openProject(key) {
+            const data = projectsData[key];
+            const target = document.getElementById('project-content-target');
+            target.innerHTML = `
+                <div class="animate-pulse-slow">
+                    <span class="text-sky-400 font-black tracking-[0.3em] text-xs">${data.tag}</span>
+                    <h1 class="text-4xl md:text-6xl font-black text-white mt-2 mb-6 uppercase tracking-tighter">${data.title}</h1>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mt-12">
+                        <div>
+                            <p class="text-lg text-slate-400 leading-relaxed">${data.desc}</p>
+                            <div class="flex gap-4 mt-8">
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <h5 class="text-white font-bold uppercase tracking-widest text-sm border-l-4 border-yellow-400 pl-4">Core Features</h5>
+                            <ul class="space-y-3">
+                                ${data.features.map(f => `
+                                    <li class="flex items-center gap-3 text-slate-300 bg-slate-800/30 p-3 rounded-lg border border-slate-700">
+                                        <i class="fas fa-check-circle text-sky-400"></i> ${f}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-projects').classList.remove('active');
+            const detailPage = document.getElementById('project-detail');
+            detailPage.style.display = 'block';
+            setTimeout(() => detailPage.classList.add('active'), 50);
+        }
+
+        function closeProject() {
+            const detailPage = document.getElementById('project-detail');
+            detailPage.classList.remove('active');
+            setTimeout(() => {
+                detailPage.style.display = 'none';
+                openModal('modal-projects');
+            }, 400);
+        }
+   
+ const ctxNetspeed = document.getElementById('realtimeChart-netspeed').getContext('2d');
+        
+        const createGradientNetspeed = (ctx, color) => {
+            const g = ctx.createLinearGradient(0, 0, 0, 400);
+            g.addColorStop(0, color.replace('1)', '0.2)'));
+            g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            return g;
+        };
+
+        const chartNetspeed = new Chart(ctxNetspeed, {
+            type: 'line',
+            data: {
+                labels: Array(60).fill(''),
+                datasets: [
+                    {
+                        data: Array(60).fill(0),
+                        borderColor: '#36B6EF',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.4,
+                        fill: true,
+                        backgroundColor: (c) => createGradientNetspeed(c.chart.ctx, 'rgba(54, 182, 239, 1)')
+                    },
+                    {
+                        data: Array(60).fill(0),
+                        borderColor: '#F1D646',
+                        borderWidth: 1.5,
+                        pointRadius: 0,
+                        tension: 0.4,
+                        fill: true,
+                        backgroundColor: (c) => createGradientNetspeed(c.chart.ctx, 'rgba(241, 214, 70, 1)')
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false },
+                    y: { display: false, beginAtZero: true, suggestedMax: 100 }
+                },
+                animation: { duration: 200 }
+            }
+        });
+
+        async function measureConnectivityNetspeed() {
+            const dlElNetspeed = document.getElementById('dl-val-netspeed');
+            const ulElNetspeed = document.getElementById('ul-val-netspeed');
+
+            while(true) {
+                const startTimeNetspeed = performance.now();
+                // ... di dalam loop measureConnectivityNetspeed ...
+try {
+    await fetch("https://www.google.com/images/phd/px.gif?t=" + Math.random(), { 
+        mode: 'no-cors', cache: 'no-store'
+    });
+    const durationNetspeed = performance.now() - startTimeNetspeed;
+
+    let dlNetspeed = Math.round(4800 / durationNetspeed);
+    if (dlNetspeed > 999) dlNetspeed = 999;
+    let ulNetspeed = Math.floor(dlNetspeed * 0.42 + (Math.random() * 2));
+
+    // Update Nilai Utama (Bawah)
+    document.getElementById('dl-val-netspeed').innerText = dlNetspeed;
+    document.getElementById('ul-val-netspeed').innerText = ulNetspeed;
+
+    // UPDATE NILAI SAMPING (BARU)
+    document.getElementById('side-dl').innerText = dlNetspeed;
+    document.getElementById('side-ul').innerText = ulNetspeed;
+
+    // UPDATE PROGRESS BAR SAMPING (Asumsi max speed 100Mbps untuk bar)
+    document.getElementById('bar-dl').style.height = Math.min((dlNetspeed/100)*100, 100) + "%";
+    document.getElementById('bar-ul').style.height = Math.min((ulNetspeed/50)*100, 100) + "%";
+
+    chartNetspeed.data.datasets[0].data.push(dlNetspeed);
+    chartNetspeed.data.datasets[0].data.shift();
+    chartNetspeed.data.datasets[1].data.push(ulNetspeed);
+    chartNetspeed.data.datasets[1].data.shift();
+    chartNetspeed.update('none');
+
+} catch (error) {}
+// ... sisa kode ...
+                await new Promise(r => setTimeout(r, 450));
+            }
+        }
+        window.onload = measureConnectivityNetspeed;
+ // ... SCRIPT INDIKATOR MENJADI 0 ...
+async function measureConnectivityNetspeed() {
+    const statusDot = document.getElementById('status-dot-netspeed'); // Ambil elemen dot
+
+    while(true) {
+        const startTimeNetspeed = performance.now();
+        try {
+            // timeout 3 detik agar tidak menunggu terlalu lama saat koneksi mati
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+            await fetch("https://www.google.com/images/phd/px.gif?t=" + Math.random(), { 
+                mode: 'no-cors', cache: 'no-store', signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            const durationNetspeed = performance.now() - startTimeNetspeed;
+
+            let dlNetspeed = Math.round(4800 / durationNetspeed);
+            if (dlNetspeed > 999) dlNetspeed = 999;
+            let ulNetspeed = Math.floor(dlNetspeed * 0.42 + (Math.random() * 2));
+
+            // Update Status Online (Biru)
+            statusDot.style.backgroundColor = '#36B6EF';
+            statusDot.style.boxShadow = '0 0 15px #36B6EF';
+
+            updateDisplay(dlNetspeed, ulNetspeed);
+
+        } catch (error) {
+            // KONEKSI TERPUTUS: Set semua ke 0
+            updateDisplay(0, 0);
+            
+            // Update Status Offline (Merah)
+            statusDot.style.backgroundColor = '#ff4444';
+            statusDot.style.boxShadow = '0 0 15px #ff4444';
+        }
+        await new Promise(r => setTimeout(r, 1000)); // Cek setiap 1 detik
+    }
+}
+
+// Fungsi pembantu agar kode lebih rapi
+function updateDisplay(dl, ul) {
+    // Update Teks
+    document.getElementById('dl-val-netspeed').innerText = dl || "0";
+    document.getElementById('ul-val-netspeed').innerText = ul || "0";
+    document.getElementById('side-dl').innerText = dl || "0";
+    document.getElementById('side-ul').innerText = ul || "0";
+
+    // Update Progress Bar
+    document.getElementById('bar-dl').style.height = Math.min((dl/100)*100, 100) + "%";
+    document.getElementById('bar-ul').style.height = Math.min((ul/50)*100, 100) + "%";
+
+    // Update Chart
+    chartNetspeed.data.datasets[0].data.push(dl);
+    chartNetspeed.data.datasets[0].data.shift();
+    chartNetspeed.data.datasets[1].data.push(ul);
+    chartNetspeed.data.datasets[1].data.shift();
+    chartNetspeed.update('none');
+}
+
+// chatbot
+// Inisialisasi Variabel Chat
+const chatInputAielmo = document.getElementById('chat-input-aielmo');
+const sendBtnAielmo = document.getElementById('send-btn-aielmo');
+const chatContainerAielmo = document.getElementById('chat-container-aielmo');
+const historyBufferAielmo = document.getElementById('history-buffer-aielmo');
+
+// Inisialisasi variabel di luar fungsi
+let chatHistoryArrayAielmo = [];
+
+	function sendMessageAielmo() {
+    const inputField = document.getElementById('chat-input-aielmo');
+    const message = inputField.value.trim();
+    
+    // 1. Validasi Input
+    if (!message) return;
+
+    // 2. Tampilkan pesan user di gelembung chat (Tetap teks asli yang diketik)
+    appendMessageAielmo('user', message);
+    
+    // 3. Simpan pesan ke dalam History Array
+    chatHistoryArrayAielmo.push(message);
+    
+    // 4. Update Tampilan History Buffer di Dashboard
+    // 'textToAnalyze' menggabungkan seluruh chat untuk konteks yang lebih dalam
+    const textToAnalyze = chatHistoryArrayAielmo.join(" ");
+    const historyElement = document.getElementById('history-buffer-aielmo');
+    if (historyElement) {
+        historyElement.innerText = "History terdeteksi: " + textToAnalyze;
+    }
+
+    // 5. LOGIKA KONTEKS PENCARIAN (searchContext)
+    // Jika user mengetik pesan pendek (misal "harga"), kita ambil referensi dari pesan sebelumnya
+    let searchContext = message;
+    if (chatHistoryArrayAielmo.length > 1) {
+        const previousMessage = chatHistoryArrayAielmo[chatHistoryArrayAielmo.length - 2];
+        
+        // Jika pesan saat ini pendek (<= 5 karakter), gunakan pesan sebelumnya + sekarang
+        if (message.length <= 5) {
+            searchContext = previousMessage + " " + message;
+        } else {
+            // Jika pesan cukup panjang, gunakan gabungan history untuk akurasi maksimal
+            searchContext = textToAnalyze;
+        }
+    }
+
+    // 6. Reset Input Field
+    inputField.value = '';
+
+    // 7. Mulai Proses Loading AI (Animasi 3 titik)
+    const typingId = "typing-" + Date.now();
+    const loadingHtml = `
+        <div class="typing-dots">
+            <span></span><span></span><span></span>
+        </div>
+    `;
+    appendMessageAielmo('ai', loadingHtml, typingId);
+
+    // 8. HUBUNGKAN KE GOOGLE APPS SCRIPT
+    // Ganti URL di bawah dengan URL Web App Apps Script Anda
+    const scriptUrl = "https://script.google.com/macros/s/AKfycbwBv9ZXIcwXq1jCF6bcxxUhQY_So_v2Ad74xyWLKi0zITCRCmd_4fp3Ufg7w-3cPcTI5w/exec"; 
+    
+    fetch(`${scriptUrl}?q=${encodeURIComponent(searchContext)}`)
+        .then(response => response.text())
+        .then(data => {
+            // Hapus elemen loading dots sebelum menampilkan jawaban
+            const typingElement = document.getElementById(typingId);
+            if (typingElement) typingElement.remove();
+
+            // 9. Tampilkan jawaban dari Google Sheets dengan Efek Mengetik
+            // Jika data kosong atau tidak ditemukan, berikan pesan default
+            const finalResponse = data || "Maaf, saya tidak menemukan informasi yang sesuai dengan konteks '" + searchContext + "'.";
+            typeWriterAielmo(finalResponse);
+        })
+        .catch(error => {
+            // Hapus loading jika terjadi error
+            const typingElement = document.getElementById(typingId);
+            if (typingElement) typingElement.remove();
+            
+            typeWriterAielmo("Terjadi kesalahan koneksi. sepertinya koneksi sedang terpurus, silahkan periksa koneksi internetmu.");
+            console.error("Fetch Error:", error);
+        });
+}
+
+// Update fungsi append agar mendukung HTML (untuk memunculkan dots)
+function appendMessageAielmo(sender, content, id = null) {
+    const bubbleWrapper = document.createElement('div');
+    bubbleWrapper.className = "flex w-full mb-2 " + (sender === 'user' ? "justify-end" : "justify-start");
+    bubbleWrapper.id = id;
+
+    const bubble = document.createElement('div');
+    // Perubahan utama: Menghapus 'w-full' dan memastikan menggunakan 'max-w-[85%]'
+    const baseClass = "p-3 rounded-2xl text-xs max-w-[85%] animate-fade-in ";
+    
+    if (sender === 'user') {
+        bubble.className = baseClass + "bg-sky-500 text-slate-900 rounded-tr-none";
+        bubble.innerText = content;
+    } else {
+        bubble.className = baseClass + "bg-white/5 border border-white/10 text-slate-300 rounded-tl-none";
+        bubble.innerHTML = content; // Agar animasi dots loading bisa terbaca sebagai HTML
+    }
+    
+    bubbleWrapper.appendChild(bubble);
+    chatContainerAielmo.appendChild(bubbleWrapper);
+    
+    // Auto scroll ke bawah
+    chatContainerAielmo.scrollTop = chatContainerAielmo.scrollHeight;
+}
+function typeWriterAielmo(htmlContent) {
+    const bubbleWrapper = document.createElement('div');
+    bubbleWrapper.className = "flex w-full mb-2 justify-start";
+    
+    const bubble = document.createElement('div');
+    // Tambahkan class 'prose-custom' untuk merapikan list dan heading
+    bubble.className = "p-3 rounded-2xl text-xs max-w-[85%] animate-fade-in bg-white/5 border border-white/10 text-slate-300 rounded-tl-none prose-custom";
+    
+    bubbleWrapper.appendChild(bubble);
+    chatContainerAielmo.appendChild(bubbleWrapper);
+
+    // Buat elemen bayangan untuk menampung HTML asli
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+    
+    let i = 0;
+    const fullText = htmlContent;
+    const speed = 5; // Kecepatan dipercepat karena konten HTML biasanya panjang
+
+    // Fungsi untuk mengetik HTML secara aman
+    function type() {
+        if (i <= fullText.length) {
+            bubble.innerHTML = fullText.slice(0, i);
+            i++;
+            chatContainerAielmo.scrollTop = chatContainerAielmo.scrollHeight;
+            setTimeout(type, speed);
+        }
+    }
+    type();
+}
+// Event Listeners
+sendBtnAielmo.addEventListener('click', sendMessageAielmo);
+chatInputAielmo.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessageAielmo();
+});
+
+</script>
+<audio id="notifAudioAielmo" src="https://www.soundjay.com/buttons/sounds/button-3.mp3" preload="auto"></audio>
+<div id="toast-container-aielmo"></div>
+
+<script>
+// Fungsi untuk memunculkan notifikasi modern
+function showModernToast(message) {
+    const container = document.getElementById('toast-container-aielmo');
+    const toast = document.createElement('div');
+    toast.className = 'toast-modern-aielmo';
+    
+    toast.innerHTML = `
+        <div class="toast-icon-aielmo">
+            <i class="fas fa-robot"></i>
+        </div>
+        <div class="toast-content-aielmo">
+            <b>Memproses Permintaan</b>
+            <p>${message}</p>
+        </div>
+    `;
+    
+    container.appendChild(toast);
+
+    // Suara notifikasi (opsional jika elemen audio ada)
+    const audio = document.getElementById('notifAudioAielmo');
+    if (audio) audio.play().catch(() => {});
+
+    // Hilangkan otomatis dalam 3.5 detik
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(20px)';
+        toast.style.transition = 'all 0.4s ease';
+        setTimeout(() => toast.remove(), 400);
+    }, 3500);
+}
+
+function sendSuggestionAielmo(text) {
+    // 1. Munculkan notifikasi
+    showModernToast(text);
+
+    // 2. Cari elemen input text box
+    const inputField = document.getElementById('chat-input-aielmo');
+    
+    if (inputField) {
+        inputField.value = text; // Mengisi kotak teks
+        inputField.focus();      // Fokus ke kotak teks
+        
+        // 3. Langsung kirim tanpa jeda (0.0 detik)
+        if (typeof sendMessageAielmo === "function") {
+            sendMessageAielmo();
+        }
+    }
+}
+</script>
+<script>
+    function updateGreeting() {
+        const greetingElement = document.getElementById("greeting-text");
+        const hour = new Date().getHours();
+        let greeting = "";
+
+        if (hour >= 5 && hour < 11) {
+            greeting = "Selamat Pagi.";
+        } else if (hour >= 11 && hour < 15) {
+            greeting = "Selamat Siang.";
+        } else if (hour >= 15 && hour < 18) {
+            greeting = "Selamat Sore.";
+        } else {
+            greeting = "Selamat Malam.";
+        }
+
+        greetingElement.innerText = greeting;
+    }
+
+    // Jalankan fungsi saat halaman dimuat
+    updateGreeting();
+	
+	function updateOnlineStatus() {
+    const statusElement = document.getElementById('connection-status');
+    const statusIcon = document.getElementById('status-icon');
+    
+    if (navigator.onLine) {
+        // --- MODE ONLINE (HIJAU) ---
+        statusElement.innerHTML = 'System Online';
+        statusElement.classList.replace('text-red-500', 'text-green-500');
+        
+        // Ubah ikon microchip menjadi HIJAU
+        if (statusIcon) {
+            statusIcon.classList.remove('text-red-500');
+            statusIcon.classList.remove('text-sky-400'); // Hapus warna biru lama jika ada
+            statusIcon.classList.add('text-green-500');  // Set ke hijau
+        }
+    } else {
+        // --- MODE OFFLINE (MERAH) ---
+        statusElement.innerHTML = 'System Offline';
+        statusElement.classList.replace('text-green-500', 'text-red-500');
+        
+        // Ubah ikon microchip menjadi MERAH
+        if (statusIcon) {
+            statusIcon.classList.remove('text-green-500');
+            statusIcon.classList.remove('text-sky-400');
+            statusIcon.classList.add('text-red-500');
+        }
+    }
+}
+
+// Event Listeners
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+
+// Jalankan saat pertama kali load
+updateOnlineStatus();
+</script>
+<script>
+    // Fungsi Utama Update Data
+    async function updatePrecisionEnv(lat, lon) {
+        try {
+            document.getElementById('loc-coords').innerText = `${lat.toFixed(3)}, ${lon.toFixed(3)}`;
+
+            const [weatherRes, geoRes] = await Promise.all([
+                fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m`),
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`)
+            ]);
+
+            const weatherData = await weatherRes.json();
+            const geoData = await geoRes.json();
+
+            const locationName = geoData.address.village || geoData.address.suburb || geoData.address.city_district || geoData.address.city || "Area Terdeteksi";
+
+            // Update Tampilan UI
+            document.getElementById('temp-display').innerText = Math.round(weatherData.current.temperature_2m) + "°C";
+            document.getElementById('humi-display').innerText = weatherData.current.relative_humidity_2m + "%";
+            document.getElementById('loc-city').innerText = locationName;
+
+            // Simpan ke Sesi agar saat refresh tidak minta GPS lagi
+            sessionStorage.setItem('cached_lat', lat);
+            sessionStorage.setItem('cached_lon', lon);
+            sessionStorage.setItem('location_captured', 'true');
+
+        } catch (error) {
+            console.error("Gagal sinkronisasi data lingkungan.");
+        }
+    }
+
+    function initHeaderSensors() {
+    // 1. Jika user sudah pernah pilih lokasi di peta, langsung gunakan itu (Tanpa minta izin GPS)
+    if (isManualLocation && manualLat && manualLon) {
+        updatePrecisionEnv(manualLat, manualLon);
+        // Update teks koordinat di layar
+        document.getElementById('loc-coords').innerText = `${manualLat.toFixed(4)}, ${manualLon.toFixed(4)}`;
+        return; 
+    }
+
+    // 2. Jika tidak ada lokasi manual, baru gunakan GPS
+    if (navigator.geolocation) {
+        navigator.permissions.query({name:'geolocation'}).then(function(result) {
+            if (result.state === 'granted') {
+                // Jika sudah diizinkan sebelumnya, ambil posisi tanpa pop-up yang mengganggu
+                navigator.geolocation.getCurrentPosition(pos => {
+                    updatePrecisionEnv(pos.coords.latitude, pos.coords.longitude);
+                });
+            } else if (result.state === 'prompt') {
+                // Hanya minta izin jika memang benar-benar belum pernah ditanya
+                navigator.geolocation.getCurrentPosition(pos => {
+                    updatePrecisionEnv(pos.coords.latitude, pos.coords.longitude);
+                });
+            } else {
+                // Jika ditolak, gunakan default Jakarta
+                updatePrecisionEnv(-6.20, 106.84);
+            }
+        });
+    }
+}
+function resetToGPS() {
+    localStorage.clear();
+    location.reload();
+}
+
+// Jalankan saat pertama kali buka
+window.addEventListener('DOMContentLoaded', initHeaderSensors);
+
+// --- PERBAIKAN INTERVAL ---
+setInterval(() => {
+    if (isManualLocation) {
+        // Jika sudah pilih di peta, gunakan koordinat manual terus menerus
+        updatePrecisionEnv(manualLat, manualLon);
+    } else {
+        // Jika belum, gunakan GPS otomatis
+        initHeaderSensors();
+    }
+}, 10000); // Update setiap 10 detik
+
+    window.addEventListener('DOMContentLoaded', initHeaderSensors);
+</script>
+
+
+
+<script>
+    // Fungsi untuk ganti teks otomatis
+    (function() {
+    const textElement = document.getElementById('changing-text');
+    const content = [
+        'Smart Control System <span class="text-sky-400">LAL IDtekno</span>',
+        'ini hanya prakiraan <span class="text-sky-400">Suhu & Kelembapan</span>',
+		'Menurut titi Koordinat <span class="text-sky-400">Yang ditentukan</span>',
+        'Data diperbarui otomatis <span class="text-sky-400">via Satelit</span>',
+		'Untuk lebih akurat <span class="text-sky-400">perlu perangkat sesuai</span>'// Contoh isi konten ketiga
+    ];
+    
+    let currentIndex = 0;
+
+    setInterval(() => {
+        // Efek fade out
+        textElement.style.opacity = '0';
+        
+        setTimeout(() => {
+            // Berpindah ke indeks berikutnya
+            currentIndex = (currentIndex + 1) % content.length;
+            
+            // Masukkan konten baru
+            textElement.innerHTML = content[currentIndex];
+            
+            // Efek fade in
+            textElement.style.opacity = '1';
+        }, 500); // Waktu animasi pudar
+    }, 5000); // Berganti setiap 5 detik
+})();
+</script>
+<div id="mapModal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
+    <div class="bg-slate-900 border border-white/10 w-full max-w-2xl rounded-[2rem] overflow-hidden shadow-2xl">
+        <div class="p-6 border-b border-white/5 flex justify-between items-center">
+            <div>
+                <h3 class="text-[20px] font-black text-white tracking-tighter leading-none mb-2">
+    Lokasi <span id="greeting-text" class="text-sky-400">KOORDINAT.</span>
+</h3>
+                <p class="text-slate-500 text-xs  tracking-widest text-white text-[14px]">Geser pin atau cari kota</p>
+            </div>
+            <button onclick="closeMapModal()" class="text-slate-400 hover:text-white transition text-2xl">&times;</button>
+        </div>
+
+        <div class="p-4">
+            <div id="map"></div>
+        </div>
+
+        <div class="p-6 bg-white/5 flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div class="text-left w-full">
+                <p id="map-status" class="text-sky-400 font-mono text-[10px] uppercase">Siap Menunggu Pin...</p>
+                <p id="map-detail" class="text-slate-400 text-[10px] truncate max-w-[300px]">Titik belum dipilih</p>
+            </div>
+            <button onclick="applyNewLocation()" 
+    class="w-[200px] h-[50px] bg-sky-500 hover:bg-sky-400 text-white rounded-[12px] text-[12px] font-bold transition shadow-lg shadow-sky-500/20 active:scale-95">
+    TERAPKAN LOKASI
+</button>
+        </div>
+    </div>
+</div>
+<script>
+// Menggunakan DOMContentLoaded agar lebih ringan dan tidak menunggu seluruh aset selesai dimuat
+document.addEventListener('DOMContentLoaded', function() {
+    // Beri jeda 1.5 detik agar skrip dashboard/kecepatan internet stabil dulu
+    setTimeout(checkLocationSession, 1500);
+});
+
+function checkLocationSession() {
+    const sessionActive = sessionStorage.getItem('locationFetchedInSession');
+    const savedLat = sessionStorage.getItem('lastLat');
+    const savedLon = sessionStorage.getItem('lastLon');
+
+    if (sessionActive === 'true' && savedLat && savedLon) {
+        // Langsung tampilkan dari memori (tanpa fetch ulang koordinat)
+        updateUIWithLocation(parseFloat(savedLat), parseFloat(savedLon));
+    } else {
+        requestLocation();
+    }
+}
+
+function requestLocation() {
+    if (navigator.geolocation) {
+        // Mengurangi akurasi ke 'false' untuk respon yang lebih cepat dan ringan
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+
+                sessionStorage.setItem('locationFetchedInSession', 'true');
+                sessionStorage.setItem('lastLat', lat);
+                sessionStorage.setItem('lastLon', lon);
+
+                updateUIWithLocation(lat, lon);
+            },
+            (error) => {
+                console.warn("Akses lokasi tertunda:", error.message);
+            },
+            { 
+                enableHighAccuracy: false, // Diganti ke false agar tidak membebani prosesor
+                timeout: 5000, 
+                maximumAge: Infinity 
+            }
+        );
+    }
+}
+
+async function updateUIWithLocation(lat, lon) {
+    // 1. Update Koordinat di UI secara instan
+    const coordEl = document.getElementById('loc-coords');
+    if(coordEl) coordEl.innerText = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+
+    // 2. Jalankan update lingkungan (suhu/kelembapan)
+    if (typeof updatePrecisionEnv === "function") {
+        updatePrecisionEnv(lat, lon);
+    }
+
+    // 3. Nama kota dimuat di latar belakang (tidak menunggu fungsi ini selesai)
+    getCityName(lat, lon);
+}
+
+// Fungsi terpisah untuk mencari nama kota agar tidak mengganggu fungsi UI utama
+async function getCityName(lat, lon) {
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+        const data = await response.json();
+        const city = data.address.city || data.address.town || data.address.village || "LOKASI AKTIF";
+        const cityEl = document.getElementById('loc-city');
+        if(cityEl) cityEl.innerText = city.toUpperCase();
+    } catch (err) {
+        console.log("Reverse geocoding dilewati untuk menjaga performa.");
+    }
+}
+// Mengambil data dari memori browser jika sudah pernah diatur sebelumnya
+let isManualLocation = localStorage.getItem('isManual') === 'true';
+let manualLat = localStorage.getItem('lastLat') ? parseFloat(localStorage.getItem('lastLat')) : null;
+let manualLon = localStorage.getItem('lastLon') ? parseFloat(localStorage.getItem('lastLon')) : null;
+
+let map, marker, selectedLat, selectedLon;
+
+function openMapModal() {
+    document.getElementById('mapModal').classList.remove('hidden');
+    
+    // Ambil koordinat saat ini dari teks UI
+    const currentCoords = document.getElementById('loc-coords').innerText.split(',');
+    selectedLat = parseFloat(currentCoords[0]) || -6.20;
+    selectedLon = parseFloat(currentCoords[1]) || 106.84;
+
+    if (!map) {
+        // Inisialisasi Peta
+        map = L.map('map').setView([selectedLat, selectedLon], 13);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Tambah Kotak Pencarian (Search Box)
+        const geocoder = L.Control.geocoder({
+    defaultMarkGeocode: false,
+    placeholder: "Cari kota/lokasi...", // Teks placeholder ini juga akan terbantu oleh CSS di atas
+})
+        .on('markgeocode', function(e) {
+            const bbox = e.geocode.bbox;
+            const center = e.geocode.center;
+            moveMarker(center.lat, center.lng);
+            map.fitBounds(bbox);
+        })
+        .addTo(map);
+
+        // Marker Utama
+        marker = L.marker([selectedLat, selectedLon], { draggable: true }).addTo(map);
+
+        // Update koordinat saat marker digeser
+        marker.on('dragend', function() {
+            const pos = marker.getLatLng();
+            moveMarker(pos.lat, pos.lng);
+        });
+
+        // Update saat peta diklik
+        map.on('click', function(e) {
+            moveMarker(e.latlng.lat, e.latlng.lng);
+        });
+    } else {
+        moveMarker(selectedLat, selectedLon);
+        map.setView([selectedLat, selectedLon], 13);
+    }
+
+    setTimeout(() => { map.invalidateSize(); }, 300);
+}
+
+function moveMarker(lat, lon) {
+    selectedLat = lat;
+    selectedLon = lon;
+    marker.setLatLng([lat, lon]);
+    document.getElementById('map-status').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+    
+    // Reverse Geocoding (Cari nama tempat dari koordinat secara gratis)
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+        .then(res => res.json())
+        .then(data => {
+            const name = data.display_name || "Lokasi Terpilih";
+            document.getElementById('map-detail').innerText = name;
+        });
+}
+
+function applyNewLocation() {
+    isManualLocation = true;
+    manualLat = selectedLat;
+    manualLon = selectedLon;
+
+    // Simpan ke memori browser agar saat refresh tidak hilang
+    localStorage.setItem('isManual', 'true');
+    localStorage.setItem('lastLat', selectedLat);
+    localStorage.setItem('lastLon', selectedLon);
+    
+    document.getElementById('loc-coords').innerText = `${selectedLat.toFixed(4)}, ${selectedLon.toFixed(4)}`;
+    
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${selectedLat}&lon=${selectedLon}`)
+        .then(res => res.json())
+        .then(data => {
+            const city = data.address.city || data.address.town || data.address.village || "Unknown";
+            document.getElementById('loc-city').innerText = city.toUpperCase();
+        });
+
+    updatePrecisionEnv(selectedLat, selectedLon);
+    closeMapModal();
+}
+
+function closeMapModal() {
+    document.getElementById('mapModal').classList.add('hidden');
+}</script>
+</body>
+</html>	
